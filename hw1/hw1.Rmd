@@ -53,7 +53,7 @@ fit_lc <- function(y, x) {
 ```
 
 ```{r}
-new_lm <- lm(dat$y ~ dat$x,na.action = na.omit)
+new_lm <- lm(dat$y ~ dat$x+I(dat$x[,1]^2),na.action = na.omit)
 ```
 
 * I add x[,1]^2 in the model, this makes the model have a lower bias and higher variance than the original one. The original model has high bias and low variance.
