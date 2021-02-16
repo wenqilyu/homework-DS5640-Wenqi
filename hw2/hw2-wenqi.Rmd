@@ -1,0 +1,178 @@
+---
+title: "HW2-Wenqi"
+author: "Wenqi Lyu"
+output: html_document
+---
+
+# Load the data
+
+## load prostate data
+```{r}
+prostate <- 
+  read.table(url(
+    'https://web.stanford.edu/~hastie/ElemStatLearn/datasets/prostate.data'))
+```
+
+## subset to training examples
+```{r}
+prostate_train <- subset(prostate, train==TRUE)
+```
+
+## plot lcavol vs lpsa
+
+```{r}
+plot_psa_data <- function(dat=prostate_train) {
+  plot(dat$lpsa, dat$lcavol,
+       xlab="log Prostate Screening Antigen (psa)",
+       ylab="log Cancer Volume (lcavol)",
+       pch = 20)
+}
+plot_psa_data()
+```
+
+# Q1: L1 and tilted loss
+
+```{r}
+L1_loss <- function(y, yhat)
+  (y-yhat)^2+2*abs(y-yhat)
+
+tilted_loss <- function(y, yhat, tau){
+  ifelse(y-yhat>0, tau * ((y-yhat)^2+2*abs(y-yhat)), 2 *tau * ((y-yhat)^2+2*abs(y-yhat)))
+}
+```
+
+# Q2: linear model predictors plot
+
+## linear model function
+
+```{r}
+fit_lin <- function(y, x, loss=L2_loss, beta_init = c(-0.51, 0.75)) {
+  err <- function(beta)
+    mean(loss(y,  beta[1] + beta[2]*x))
+  beta <- optim(par = beta_init, fn = err)
+  return(beta)
+}
+predict_lin <- function(x, beta)
+  beta[1] + beta[2]*x
+```
+
+## l1 loss function
+
+```{r}
+fit_l1_lin <- function(y, x, loss=L1_loss, beta_init = c(-0.51, 0.75)) {
+  err <- function(beta)
+    mean(loss(y,  beta[1] + beta[2]*x,tau))
+  beta <- optim(par = beta_init, fn = err)
+  return(beta)
+}
+
+lin_l1_beta <- fit_lin(y=prostate_train$lcavol,
+                    x=prostate_train$lpsa,
+                    loss=L1_loss)
+
+x_grid <- seq(min(prostate_train$lpsa),
+              max(prostate_train$lpsa),
+              length.out=100)
+
+lin_pred_l1 <- predict_lin(x=x_grid, beta=lin_l1_beta$par)
+
+```
+
+## tilted loss function
+
+```{r}
+fit_tilt_lin <- function(y, x, tau = c(0.25,0.75),loss=L1_loss,beta_init = c(-0.51, 0.75)) {
+  err <- function(beta)
+    mean(loss(y,  beta[1] + beta[2]*x,tau))
+  beta <- optim(par = beta_init, fn = err)
+  return(beta)
+}
+
+lin_beta_tau25 <- fit_tilt_lin(y = prostate_train$lcavol,
+                         x = prostate_train$lpsa,
+                         tau = 0.25,
+                         loss = tilted_loss)
+
+lin_beta_tau75 <- fit_tilt_lin(y = prostate_train$lcavol,
+                         x = prostate_train$lpsa,
+                         tau = 0.75,
+                         loss = tilted_loss)
+
+lin_pred_tau25 <- predict_lin(x = x_grid, beta = lin_beta_tau25$par)
+lin_pred_tau75 <- predict_lin(x = x_grid, beta = lin_beta_tau75$par)
+```
+
+## make a plot
+
+```{r}
+plot_psa_data()
+lines(x = x_grid, y = lin_pred_l1 , col = 'darkgreen', lwd = 2)
+lines(x = x_grid, y = lin_pred_tau25, col = 'blue', lwd = 2)
+lines(x = x_grid, y = lin_pred_tau75, col = 'pink',lty=2, lwd = 2)
+legend("topleft", c("L1 loss", "tau = 0.25", "tau = 0.75"), lwd = c(2,2,2),col = c("darkgreen", "blue", "pink"))
+```
+
+
+# Q3: write functions to fit and predict from a simple nonlinear model
+
+```{r}
+fit_l1_nolin <- function(y, x, loss=L2_loss, beta_init = c(-1.0, 0.0, -0.3)) {
+  err <- function(beta)
+    mean(loss(y,  beta[1] + beta[2]*exp(-beta[3]*x)))
+  beta <- optim(par = beta_init, fn = err)
+  return(beta)
+}
+
+fit_tilt_nolin <- function(y, x, loss=L2_loss, beta_init = c(-1.0, 0.0, -0.3), tau = c(0.25,0.75)) {
+  err <- function(beta)
+    mean(loss(y,  beta[1] + beta[2]*exp(-beta[3]*x), tau))
+  beta <- optim(par = beta_init, fn = err)
+  return(beta)
+}
+
+predict_nolin <- function(x, beta)
+  beta[1] + beta[2]*exp(-beta[3]*x)
+```
+
+# Q4: nonlinear model predictors plot
+
+## l1 loss function
+
+```{r}
+nolin_beta_l1 <- fit_l1_nolin(y=prostate_train$lcavol,
+                    x=prostate_train$lpsa,
+                    loss=L1_loss)
+x_grid <- seq(min(prostate_train$lpsa),
+              max(prostate_train$lpsa),
+              length.out=100)
+nolin_pred_l1 <- predict_nolin(x=x_grid, beta=nolin_beta_l1$par)
+```
+
+## tilted loss function
+
+```{r}
+nonlin_beta_tau25 <- fit_tilt_nolin(y = prostate_train$lcavol,
+                         x = prostate_train$lpsa,
+                         tau = 0.25,
+                         loss = tilted_loss)
+nonlin_pred_tau25 <- predict_nolin(x = x_grid, beta = nonlin_beta_tau25$par)
+
+nonlin_beta_tau75 <- fit_tilt_nolin(y = prostate_train$lcavol,
+                         x = prostate_train$lpsa,
+                         tau = 0.75,
+                         loss = tilted_loss)
+nonlin_pred_tau75 <- predict_nolin(x = x_grid, beta = nonlin_beta_tau75$par)
+
+```
+
+## make a plot
+
+```{r}
+plot_psa_data()
+lines(x = x_grid, y = nolin_pred_l1, col = 'darkgreen', lwd = 2)
+lines(x = x_grid, y = nonlin_pred_tau25, col = 'blue', lwd = 2)
+lines(x = x_grid, y = nonlin_pred_tau75, col = 'pink', lty=2,lwd = 2)
+legend("topleft", c("L1 loss", " tau = 0.25", " tau = 0.75"), lwd = c(2,2,2),col = c("darkgreen", "pink", "yellow"))
+
+```
+
