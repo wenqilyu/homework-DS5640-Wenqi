@@ -34,12 +34,22 @@ plot_psa_data()
 
 ```{r}
 L1_loss <- function(y, yhat)
-  (y-yhat)^2+2*abs(y-yhat)
+  {(y-yhat)}
 
 tilted_loss <- function(y, yhat, tau){
-  ifelse(y-yhat>0, tau * ((y-yhat)^2+2*abs(y-yhat)), 2 *tau * ((y-yhat)^2+2*abs(y-yhat)))
+  ifelse((y-yhat)>0, (tau * (y-yhat)), ((tau -1)* (y-yhat)))
 }
 ```
+
+```{r}
+err_grd <- seq(-1,1,length.out=200)
+plot(err_grd, L1_loss(err_grd,0), type='l',col = 'darkgreen',
+     xlab='y-yhat', ylab='loss')
+lines(err_grd, tilted_loss(err_grd,0,0.25),col = 'blue', lty=2,lwd = 2)
+lines(err_grd, tilted_loss(err_grd,0,0.75),col = 'pink', lty=2,lwd = 2)
+legend("topleft", c("L1 loss", "tau = 0.25", "tau = 0.75"), lwd = c(2,2,2),col = c("darkgreen", "blue", "pink"))
+```
+
 
 # Q2: linear model predictors plot
 
@@ -61,7 +71,7 @@ predict_lin <- function(x, beta)
 ```{r}
 fit_l1_lin <- function(y, x, loss=L1_loss, beta_init = c(-0.51, 0.75)) {
   err <- function(beta)
-    mean(loss(y,  beta[1] + beta[2]*x,tau))
+  mean(loss(y,  beta[1] + beta[2]*x,tau))
   beta <- optim(par = beta_init, fn = err)
   return(beta)
 }
@@ -107,7 +117,7 @@ lin_pred_tau75 <- predict_lin(x = x_grid, beta = lin_beta_tau75$par)
 ```{r}
 plot_psa_data()
 lines(x = x_grid, y = lin_pred_l1 , col = 'darkgreen', lwd = 2)
-lines(x = x_grid, y = lin_pred_tau25, col = 'blue', lwd = 2)
+lines(x = x_grid, y = lin_pred_tau25, col = 'blue', lty=2,lwd = 2)
 lines(x = x_grid, y = lin_pred_tau75, col = 'pink',lty=2, lwd = 2)
 legend("topleft", c("L1 loss", "tau = 0.25", "tau = 0.75"), lwd = c(2,2,2),col = c("darkgreen", "blue", "pink"))
 ```
@@ -170,9 +180,9 @@ nonlin_pred_tau75 <- predict_nolin(x = x_grid, beta = nonlin_beta_tau75$par)
 ```{r}
 plot_psa_data()
 lines(x = x_grid, y = nolin_pred_l1, col = 'darkgreen', lwd = 2)
-lines(x = x_grid, y = nonlin_pred_tau25, col = 'blue', lwd = 2)
+lines(x = x_grid, y = nonlin_pred_tau25, col = 'blue', lty=2,lwd = 2)
 lines(x = x_grid, y = nonlin_pred_tau75, col = 'pink', lty=2,lwd = 2)
-legend("topleft", c("L1 loss", " tau = 0.25", " tau = 0.75"), lwd = c(2,2,2),col = c("darkgreen", "pink", "yellow"))
+legend("topleft", c("L1 loss", " tau = 0.25", " tau = 0.75"), lwd = c(2,2,2),col = c("darkgreen", "blue", "pink"))
 
 ```
 
