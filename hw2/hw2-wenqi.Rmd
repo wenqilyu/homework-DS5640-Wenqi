@@ -34,7 +34,7 @@ plot_psa_data()
 
 ```{r}
 L1_loss <- function(y, yhat)
-  {(y-yhat)}
+  {(y-yhat)^2+(y-yhat)}
 
 tilted_loss <- function(y, yhat, tau){
   ifelse((y-yhat)>0, (tau * (y-yhat)), ((tau -1)* (y-yhat)))
