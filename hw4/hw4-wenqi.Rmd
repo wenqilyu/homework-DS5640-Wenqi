@@ -1,0 +1,89 @@
+---
+title: "hw4-wenqi"
+output: html_document
+---
+
+# Q10
+
+* Q4 is the picture
+
+## a
+
+```{r}
+library(ISLR)
+```
+
+
+```{r}
+summary(Weekly)
+```
+
+## b
+
+```{r}
+fit <- glm(Weekly$Direction ~ Weekly$Lag1+Weekly$Lag2+Weekly$Lag3+Weekly$Lag4+Weekly$Lag5+Weekly$Volume,family = binomial)
+```
+
+## c
+
+```{r}
+prid <- predict(fit, type = "response")
+prid_glm <- rep("Down", length(prid))
+prid_glm [prid > 0.5] <- "up"
+table(prid_glm,Weekly$Direction)
+```
+
+
+## d
+
+```{r}
+train_data <- (Weekly$Year <= 2008)
+wek <- Weekly[!train_data, ]
+dir <- Weekly$Direction[!train_data]
+fit_glm_lg2 <- glm(Direction ~ Lag2, data = Weekly, family = binomial, subset = train_data)
+summary(fit_glm_lg2)
+
+
+pred_glm_lg2 <- predict(fit_glm_lg2, wek, type = "response")
+prid_glm_lg2 <- rep("Down", length(pred_glm_lg2))
+prid_glm_lg2 [pred_glm_lg2 > 0.5] <- "Up"
+table(prid_glm_lg2 , dir)
+```
+
+
+
+## e
+
+
+```{r}
+library(MASS)
+fit_lda <- lda(Direction ~ Lag2, data = Weekly, subset = train_data)
+prid_lda <-  predict(fit_lda, wek)
+table(prid_lda$class,dir)
+```
+
+
+
+## f
+
+```{r}
+fit_qda <- qda(Direction ~ Lag2, data = Weekly, subset = train_data)
+prid_qda <- predict(fit_qda,wek)
+table(prid_qda$class,dir)
+```
+
+## g
+
+```{r}
+
+```
+
+
+## i
+
+```{r}
+
+```
+
+
+
