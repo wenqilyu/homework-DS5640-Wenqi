@@ -36,6 +36,9 @@ plot_psa_data()
 L1_loss <- function(y, yhat)
   {(y-yhat)^2+(y-yhat)}
 
+L2_loss <- function(y, yhat)
+  (y-yhat)^2
+
 tilted_loss <- function(y, yhat, tau){
   ifelse((y-yhat)>0, (tau * (y-yhat)), ((tau -1)* (y-yhat)))
 }
@@ -45,9 +48,10 @@ tilted_loss <- function(y, yhat, tau){
 err_grd <- seq(-1,1,length.out=200)
 plot(err_grd, L1_loss(err_grd,0), type='l',col = 'darkgreen',
      xlab='y-yhat', ylab='loss')
+lines(err_grd, L2_loss(err_grd,0),col = 'orange', lty=2,lwd = 2)
 lines(err_grd, tilted_loss(err_grd,0,0.25),col = 'blue', lty=2,lwd = 2)
 lines(err_grd, tilted_loss(err_grd,0,0.75),col = 'pink', lty=2,lwd = 2)
-legend("topleft", c("L1 loss", "tau = 0.25", "tau = 0.75"), lwd = c(2,2,2),col = c("darkgreen", "blue", "pink"))
+legend("topleft", c("L1 loss", "L2 loss","tau = 0.25", "tau = 0.75"), lwd = c(2,2,2),col = c("darkgreen", "orange","blue", "pink"))
 ```
 
 
@@ -88,6 +92,28 @@ lin_pred_l1 <- predict_lin(x=x_grid, beta=lin_l1_beta$par)
 
 ```
 
+## l2 loss function
+
+```{r}
+fit_l2_lin <- function(y, x, loss=L2_loss, beta_init = c(-0.51, 0.75)) {
+  err <- function(beta)
+  mean(loss(y,  beta[1] + beta[2]*x,tau))
+  beta <- optim(par = beta_init, fn = err)
+  return(beta)
+}
+
+lin_l2_beta <- fit_lin(y=prostate_train$lcavol,
+                    x=prostate_train$lpsa,
+                    loss=L2_loss)
+
+x_grid <- seq(min(prostate_train$lpsa),
+              max(prostate_train$lpsa),
+              length.out=100)
+
+lin_pred_l2 <- predict_lin(x=x_grid, beta=lin_l2_beta$par)
+
+```
+
 ## tilted loss function
 
 ```{r}
@@ -117,9 +143,10 @@ lin_pred_tau75 <- predict_lin(x = x_grid, beta = lin_beta_tau75$par)
 ```{r}
 plot_psa_data()
 lines(x = x_grid, y = lin_pred_l1 , col = 'darkgreen', lwd = 2)
+lines(x = x_grid, y = lin_pred_l2 , col = 'orange', lty=2,lwd = 2)
 lines(x = x_grid, y = lin_pred_tau25, col = 'blue', lty=2,lwd = 2)
 lines(x = x_grid, y = lin_pred_tau75, col = 'pink',lty=2, lwd = 2)
-legend("topleft", c("L1 loss", "tau = 0.25", "tau = 0.75"), lwd = c(2,2,2),col = c("darkgreen", "blue", "pink"))
+legend("topleft", c("L1 loss", "L2 loss","tau = 0.25", "tau = 0.75"), lwd = c(2,2,2),col = c("darkgreen","orange", "blue", "pink"))
 ```
 
 
@@ -158,6 +185,19 @@ x_grid <- seq(min(prostate_train$lpsa),
 nolin_pred_l1 <- predict_nolin(x=x_grid, beta=nolin_beta_l1$par)
 ```
 
+## l2 loss function
+
+```{r}
+nolin_beta_l2 <- fit_l1_nolin(y=prostate_train$lcavol,
+                    x=prostate_train$lpsa,
+                    loss=L2_loss)
+x_grid <- seq(min(prostate_train$lpsa),
+              max(prostate_train$lpsa),
+              length.out=100)
+nolin_pred_l2 <- predict_nolin(x=x_grid, beta=nolin_beta_l2$par)
+```
+
+
 ## tilted loss function
 
 ```{r}
@@ -180,9 +220,10 @@ nonlin_pred_tau75 <- predict_nolin(x = x_grid, beta = nonlin_beta_tau75$par)
 ```{r}
 plot_psa_data()
 lines(x = x_grid, y = nolin_pred_l1, col = 'darkgreen', lwd = 2)
+lines(x = x_grid, y = nolin_pred_l2, col = 'orange', lty=2,lwd = 2)
 lines(x = x_grid, y = nonlin_pred_tau25, col = 'blue', lty=2,lwd = 2)
 lines(x = x_grid, y = nonlin_pred_tau75, col = 'pink', lty=2,lwd = 2)
-legend("topleft", c("L1 loss", " tau = 0.25", " tau = 0.75"), lwd = c(2,2,2),col = c("darkgreen", "blue", "pink"))
+legend("topleft", c("L1 loss","L2 loss", " tau = 0.25", " tau = 0.75"), lwd = c(2,2,2),col = c("darkgreen","orange", "blue", "pink"))
 
 ```
 
