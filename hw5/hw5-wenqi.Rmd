@@ -1,0 +1,218 @@
+---
+title: "hw5-wenqi"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library('MASS') ## for 'mcycle'
+library('manipulate') ## for 'manipulate'
+library(dplyr)
+library(caret)
+```
+
+# Seperate data to subsets
+
+```{r}
+mcycle <- mcycle
+```
+
+
+```{r}
+mcycle_train<-sample_frac(mcycle, 0.75)
+sid<-as.numeric(rownames(mcycle_train)) 
+mcycle_test<-mcycle[-sid,]
+```
+
+#  Predicting the mean acceleration
+
+* Nadaraya-Watson method with the k-NN kernel function
+
+```{r}
+y <- mcycle_train$accel
+x <- matrix(mcycle_train$times, length(mcycle_train$times), 1)
+```
+
+## K-NN function
+
+```{r}
+kernel_k_nearest_neighbors <- function(x, x0, k=1) {
+  ## compute distance betwen each x and x0
+  z <- t(t(x) - x0)
+  d <- sqrt(rowSums(z*z))
+
+  ## initialize kernel weights to zero
+  w <- rep(0, length(d))
+  
+  ## set weight to 1 for k nearest neighbors
+  w[order(d)[1:k]] <- 1
+  
+  return(w)
+}
+```
+
+## Make predictions using the NW method
+
+```{r}
+nadaraya_watson <- function(y, x, x0, kern, ...) {
+  k <- t(apply(x0, 1, function(x0_) {
+    k_ <- kern(x, x0_, ...)
+    k_/sum(k_)
+  }))
+  yhat <- drop(k %*% y)
+  attr(yhat, 'k') <- k
+  return(yhat)
+}
+```
+
+## create a grid of inputs 
+
+```{r}
+x_plot <- matrix(seq(min(x),max(x),length.out=100),100,1)
+```
+
+## make predictions using NW method at each of grid points
+
+```{r}
+y_hat_plot <- nadaraya_watson(y, x, x_plot,
+  kernel_k_nearest_neighbors)
+```
+
+## plot predictions
+
+```{r}
+plot(x, y, xlab="Time (ms)", ylab="Acceleration (g)")
+lines(x_plot, y_hat_plot, col="#882255", lwd=2) 
+```
+
+# AIC & BIC
+
+## Use validation data
+
+```{r}
+y <- mcycle_test$accel
+x <- matrix(mcycle_test$times, length(mcycle_test$times), 1)
+```
+
+
+## squared-error loss function
+
+```{r}
+loss_squared_error <- function(y, yhat)
+  (y - yhat)^2
+error <- function(y, yhat, loss=loss_squared_error)
+  mean(loss(y, yhat))
+```
+
+## AIC & BIC 
+
+```{r}
+aic <- function(y, yhat, d)
+  error(y, yhat) + 2/length(y)*d
+bic <- function(y, yhat, d)
+  error(y, yhat) + log(length(y))/length(y)*d
+```
+
+## Plot
+
+```{r}
+effective_df <- function(y, x, kern, ...) {
+  y_hat <- nadaraya_watson(y, x, x,
+    kern=kern, ...)
+  sum(diag(attr(y_hat, 'k')))
+}
+
+```
+
+
+
+```{r}
+manipulate({
+   ## make predictions using NW method at training inputs
+   y_hat <- nadaraya_watson(y, x, x,
+     kern=kernel_k_nearest_neighbors, k=k_slider)
+  edf <- effective_df(y, x, 
+     kern=kernel_k_nearest_neighbors, k=k_slider)
+   aic_ <- aic(y, y_hat, edf)
+   bic_ <- bic(y, y_hat, edf)
+   y_hat_plot <- nadaraya_watson(y, x, x_plot,
+     kern=kernel_k_nearest_neighbors, k=k_slider)
+   plot(x, y, xlab="Time (ms)", ylab="Acceleration (g)")
+   legend('topright', legend = c(
+     paste0('eff. df = ', round(edf,1)),
+     paste0('aic = ', round(aic_, 1)),
+     paste0('bic = ', round(bic_, 1))),
+     bty='n')
+   lines(x_plot, y_hat_plot, col="#882255", lwd=2) 
+ }, k_slider=slider(1, 10, initial=3, step=1))
+
+```
+
+# 5-fold cross-validation using the combined training and validation data
+
+
+```{r}
+set.seed(123) 
+mcycle_flds  <- createFolds(mcycle_train$accel, k=5)
+print(mcycle_flds)
+sapply(mcycle_flds, length) 
+```
+
+## 5 estimates of test error 
+
+```{r}
+cvknnreg_mcycle <- function(kNN = 10, flds=mcycle_flds) {
+  cverr <- rep(NA, length(flds))
+  for(tst_idx in 1:length(flds)) { ## for each fold
+    
+    ## get training and testing data
+    mcycle_trn <- mcycle[-flds[[tst_idx]],]
+    mcycle_tst <- mcycle[ flds[[tst_idx]],]
+    
+    ## fit kNN model to training data
+    knn_fit <- knnreg(accel ~ times,
+                      k=kNN, data=mcycle_trn)
+    
+    ## compute test error on testing data
+    pre_tst <- predict(knn_fit, mcycle_trn)
+    cverr[tst_idx] <- mean((mcycle$accel - pre_tst)^2)
+  }
+  return(cverr)
+}
+```
+
+
+# CV-estimated test error
+
+```{r}
+## Compute 5-fold CV for kNN = 1:20
+cverrs <- sapply(1:30, cvknnreg_mcycle)
+print(cverrs) ## rows are k-folds (1:5), cols are kNN (1:20)
+cverrs_mean <- apply(cverrs, 2, mean)
+cverrs_sd   <- apply(cverrs, 2, sd)
+
+## Plot the results of 5-fold CV for kNN = 1:20
+plot(x=1:30, y=cverrs_mean, 
+     ylim=range(cverrs),
+     xlab="'k' in kNN", ylab="CV Estimate of Test Error")
+segments(x0=1:30, x1=1:30,
+         y0=cverrs_mean-cverrs_sd,
+         y1=cverrs_mean+cverrs_sd)
+best_idx <- which.min(cverrs_mean)
+points(x=best_idx, y=cverrs_mean[best_idx], pch=30)
+abline(h=cverrs_mean[best_idx] + cverrs_sd[best_idx], lty=3)
+```
+
+
+## Explaination
+
+* we could choose the black point since it is the best one.
+
+
+
+
+
