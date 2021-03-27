@@ -408,17 +408,16 @@ summary {
 </div>
 <div id="b" class="section level2">
 <h2>b</h2>
-<pre class="r"><code>fit &lt;- glm(Weekly$Direction ~ Weekly$Lag1+Weekly$Lag2+Weekly$Lag3+Weekly$Lag4+Weekly$Lag5+Weekly$Volume,family = binomial)</code></pre>
+<pre class="r"><code>fit &lt;- glm(Direction ~ Lag1+Lag2+Lag3+Lag4+Lag5+Volume,family = binomial,data = Weekly)</code></pre>
 </div>
 <div id="c" class="section level2">
 <h2>c</h2>
 <pre class="r"><code>prid &lt;- predict(fit, type = &quot;response&quot;)
-prid_glm &lt;- rep(&quot;Down&quot;, length(prid))
-prid_glm [prid &gt; 0.5] &lt;- &quot;up&quot;
+prid_glm &lt;- ifelse(prid&gt;0.5,&quot;up&quot;,&quot;down&quot;)
 table(prid_glm,Weekly$Direction)</code></pre>
 <pre><code>##         
 ## prid_glm Down  Up
-##     Down   54  48
+##     down   54  48
 ##     up    430 557</code></pre>
 </div>
 <div id="d" class="section level2">
@@ -452,13 +451,12 @@ summary(fit_glm_lg2)</code></pre>
 ## 
 ## Number of Fisher Scoring iterations: 4</code></pre>
 <pre class="r"><code>pred_glm_lg2 &lt;- predict(fit_glm_lg2, wek, type = &quot;response&quot;)
-prid_glm_lg2 &lt;- rep(&quot;Down&quot;, length(pred_glm_lg2))
-prid_glm_lg2 [pred_glm_lg2 &gt; 0.5] &lt;- &quot;Up&quot;
-table(prid_glm_lg2 , dir)</code></pre>
+pred_glm_lg2 &lt;- ifelse(pred_glm_lg2&gt;0.5,&quot;up&quot;,&quot;down&quot;)
+table(pred_glm_lg2 , dir)</code></pre>
 <pre><code>##             dir
-## prid_glm_lg2 Down Up
-##         Down    9  5
-##         Up     34 56</code></pre>
+## pred_glm_lg2 Down Up
+##         down    9  5
+##         up     34 56</code></pre>
 </div>
 <div id="e" class="section level2">
 <h2>e</h2>
@@ -470,6 +468,8 @@ table(prid_lda$class,dir)</code></pre>
 ##        Down Up
 ##   Down    9  5
 ##   Up     34 56</code></pre>
+<pre class="r"><code>mean(prid_lda$class == dir)</code></pre>
+<pre><code>## [1] 0.625</code></pre>
 </div>
 <div id="f" class="section level2">
 <h2>f</h2>
@@ -480,12 +480,30 @@ table(prid_qda$class,dir)</code></pre>
 ##        Down Up
 ##   Down    0  0
 ##   Up     43 61</code></pre>
+<pre class="r"><code>mean(prid_qda$class==dir)</code></pre>
+<pre><code>## [1] 0.5865385</code></pre>
 </div>
 <div id="g" class="section level2">
 <h2>g</h2>
+<pre class="r"><code>library(class)
+train_knn &lt;- as.matrix(Weekly$Lag2[train_data])
+test_knn &lt;- as.matrix(Weekly$Lag2[!train_data])
+train.Direction &lt;- Weekly$Direction[train_data]
+set.seed(999)
+pred.knn &lt;- knn(train_knn, test_knn, train.Direction, k = 10)
+table(pred.knn,dir)</code></pre>
+<pre><code>##         dir
+## pred.knn Down Up
+##     Down   19 18
+##     Up     24 43</code></pre>
+<pre class="r"><code>mean(pred.knn==dir)</code></pre>
+<pre><code>## [1] 0.5961538</code></pre>
 </div>
 <div id="i" class="section level2">
 <h2>i</h2>
+<ul>
+<li>overall, the better model is lda whose accuracy is 0.625</li>
+</ul>
 </div>
 </div>
 

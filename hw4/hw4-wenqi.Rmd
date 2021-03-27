@@ -21,15 +21,14 @@ summary(Weekly)
 ## b
 
 ```{r}
-fit <- glm(Weekly$Direction ~ Weekly$Lag1+Weekly$Lag2+Weekly$Lag3+Weekly$Lag4+Weekly$Lag5+Weekly$Volume,family = binomial)
+fit <- glm(Direction ~ Lag1+Lag2+Lag3+Lag4+Lag5+Volume,family = binomial,data = Weekly)
 ```
 
 ## c
 
 ```{r}
 prid <- predict(fit, type = "response")
-prid_glm <- rep("Down", length(prid))
-prid_glm [prid > 0.5] <- "up"
+prid_glm <- ifelse(prid>0.5,"up","down")
 table(prid_glm,Weekly$Direction)
 ```
 
@@ -45,11 +44,9 @@ summary(fit_glm_lg2)
 
 
 pred_glm_lg2 <- predict(fit_glm_lg2, wek, type = "response")
-prid_glm_lg2 <- rep("Down", length(pred_glm_lg2))
-prid_glm_lg2 [pred_glm_lg2 > 0.5] <- "Up"
-table(prid_glm_lg2 , dir)
+pred_glm_lg2 <- ifelse(pred_glm_lg2>0.5,"up","down")
+table(pred_glm_lg2 , dir)
 ```
-
 
 
 ## e
@@ -62,6 +59,9 @@ prid_lda <-  predict(fit_lda, wek)
 table(prid_lda$class,dir)
 ```
 
+```{r}
+mean(prid_lda$class == dir)
+```
 
 
 ## f
@@ -72,18 +72,30 @@ prid_qda <- predict(fit_qda,wek)
 table(prid_qda$class,dir)
 ```
 
+```{r}
+mean(prid_qda$class==dir)
+```
+
+
 ## g
 
 ```{r}
+library(class)
+train_knn <- as.matrix(Weekly$Lag2[train_data])
+test_knn <- as.matrix(Weekly$Lag2[!train_data])
+train.Direction <- Weekly$Direction[train_data]
+set.seed(999)
+pred.knn <- knn(train_knn, test_knn, train.Direction, k = 10)
+table(pred.knn,dir)
+```
 
+```{r}
+mean(pred.knn==dir)
 ```
 
 
 ## i
 
-```{r}
-
-```
-
+* overall, the better model is lda whose accuracy is 0.625
 
 
