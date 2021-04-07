@@ -157,7 +157,7 @@ manipulate({
 
 ```{r}
 set.seed(123) 
-mcycle_flds  <- createFolds(mcycle_train$accel, k=5)
+mcycle_flds  <- createFolds(mcycle$accel, k=5)
 print(mcycle_flds)
 sapply(mcycle_flds, length) 
 ```
@@ -178,7 +178,7 @@ cvknnreg_mcycle <- function(kNN = 10, flds=mcycle_flds) {
                       k=kNN, data=mcycle_trn)
     
     ## compute test error on testing data
-    pre_tst <- predict(knn_fit, mcycle_trn)
+    pre_tst <- predict(knn_fit, mcycle_tst)
     cverr[tst_idx] <- mean((mcycle$accel - pre_tst)^2)
   }
   return(cverr)
