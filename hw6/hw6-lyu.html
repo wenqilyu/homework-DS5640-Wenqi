@@ -378,7 +378,7 @@ summary {
 <pre class="r"><code>library(&#39;randomForest&#39;)  ## fit random forest</code></pre>
 <pre><code>## randomForest 4.6-14</code></pre>
 <pre><code>## Type rfNews() to see new features/changes/bug fixes.</code></pre>
-<pre class="r"><code>library(&#39;dplyr&#39;)    ## data manipulation</code></pre>
+<pre class="r"><code>library(dplyr)    ## data manipulation</code></pre>
 <pre><code>## 
 ## Attaching package: &#39;dplyr&#39;</code></pre>
 <pre><code>## The following object is masked from &#39;package:randomForest&#39;:
@@ -390,19 +390,124 @@ summary {
 <pre><code>## The following objects are masked from &#39;package:base&#39;:
 ## 
 ##     intersect, setdiff, setequal, union</code></pre>
-<pre class="r"><code>library(&#39;magrittr&#39;) ## for &#39;%&lt;&gt;%&#39; operator
-library(&#39;gpairs&#39;)   ## pairs plot
-library(&#39;viridis&#39;)  ## viridis color palette</code></pre>
+<pre class="r"><code>library(magrittr) ## for &#39;%&lt;&gt;%&#39; operator
+library(gpairs)   ## pairs plot
+library(viridis)  ## viridis color palette</code></pre>
 <pre><code>## Loading required package: viridisLite</code></pre>
+<pre class="r"><code>library(caret)</code></pre>
+<pre><code>## Loading required package: lattice</code></pre>
+<pre><code>## Loading required package: ggplot2</code></pre>
+<pre><code>## 
+## Attaching package: &#39;ggplot2&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:randomForest&#39;:
+## 
+##     margin</code></pre>
+<pre class="r"><code>library(tidyverse)</code></pre>
+<pre><code>## ─ Attaching packages ──────────────────────────────────────────── tidyverse 1.3.0 ─</code></pre>
+<pre><code>## ✓ tibble  3.0.4     ✓ purrr   0.3.4
+## ✓ tidyr   1.1.2     ✓ stringr 1.4.0
+## ✓ readr   1.4.0     ✓ forcats 0.5.0</code></pre>
+<pre><code>## ─ Conflicts ───────────────────────────────────────────── tidyverse_conflicts() ─
+## x dplyr::combine()   masks randomForest::combine()
+## x tidyr::extract()   masks magrittr::extract()
+## x dplyr::filter()    masks stats::filter()
+## x dplyr::lag()       masks stats::lag()
+## x purrr::lift()      masks caret::lift()
+## x ggplot2::margin()  masks randomForest::margin()
+## x purrr::set_names() masks magrittr::set_names()</code></pre>
 <div id="problem12load-the-data" class="section level1">
 <h1>Problem1&amp;2:load the data</h1>
 <pre class="r"><code>vowel.train &lt;- read.csv(&quot;~/Projects/homework-DS5640-Wenqi/hw6/vowel.train.txt&quot;)
 vowel.train$y &lt;- as.factor(vowel.train$y)
-vowel.train &lt;- vowel.train %&gt;% select(-row.names)</code></pre>
+vowel.train &lt;- vowel.train[2:11]</code></pre>
 </div>
 <div id="problem3" class="section level1">
 <h1>Problem3</h1>
 <pre class="r"><code>fit.vowel &lt;- randomForest(y ~ ., data=vowel.train)</code></pre>
+</div>
+<div id="problem4" class="section level1">
+<h1>Problem4</h1>
+<pre class="r"><code>set.seed(123) 
+vowel.5flod &lt;- createFolds(vowel.train$y, k=5)</code></pre>
+<pre class="r"><code>vowel.fun &lt;- function(mtree,node, flds = vowel.5flod) {
+    cverr &lt;- rep(NA, length(flds))
+    for(tst_idx in 1:length(flds)) { ## for each fold
+    
+    ## get training and testing data
+    vowel_trn &lt;- vowel.train[-flds[[tst_idx]],]
+    vowel_tst &lt;- vowel.train[ flds[[tst_idx]],]
+    
+    vowel_trn$y &lt;- as.factor(vowel_trn$y)
+    vowel_tst$y &lt;- as.factor(vowel_tst$y)
+    
+    ## fit rf model to training data
+    fit_rf &lt;- randomForest(y ~ ., nodesize = node, mtry=mtree,data=vowel_trn)
+    
+    ## compute test error on testing data
+    pre_tst &lt;- predict(fit_rf, vowel_tst)
+    error &lt;- mean(pre_tst == vowel_tst$y)
+    
+    cverr[tst_idx] &lt;- error
+  }
+  return(mean(cverr))
+}</code></pre>
+<pre class="r"><code>err_table &lt;- expand.grid(mtree = c(3,4,5),node= c(1,5,10,20,40,80),error = NA)
+
+for (i in 1:nrow(err_table)) {
+    err &lt;- vowel.fun(mtree=err_table[i,1],node=err_table[i,2],  flds = vowel.5flod)
+    err_table[i,3]&lt;- 1-err
+}
+err_table</code></pre>
+<pre><code>##    mtree node      error
+## 1      3    1 0.04172714
+## 2      4    1 0.04735123
+## 3      5    1 0.05493469
+## 4      3    5 0.05126996
+## 5      4    5 0.05878084
+## 6      5    5 0.06444122
+## 7      3   10 0.07579826
+## 8      4   10 0.09477504
+## 9      5   10 0.10224964
+## 10     3   20 0.18374456
+## 11     4   20 0.19880261
+## 12     5   20 0.20838171
+## 13     3   40 0.32942671
+## 14     4   40 0.32953556
+## 15     5   40 0.36175617
+## 16     3   80 0.45293904
+## 17     4   80 0.47002903
+## 18     5   80 0.49071118</code></pre>
+</div>
+<div id="problem5" class="section level1">
+<h1>Problem5</h1>
+<pre class="r"><code>vowel.test &lt;- read_csv(&quot;~/Projects/homework-DS5640-Wenqi/hw6/vowel.test.txt&quot;)</code></pre>
+<pre><code>## 
+## ─ Column specification ────────────────────────────────────────────────────
+## cols(
+##   row.names = col_double(),
+##   y = col_double(),
+##   x.1 = col_double(),
+##   x.2 = col_double(),
+##   x.3 = col_double(),
+##   x.4 = col_double(),
+##   x.5 = col_double(),
+##   x.6 = col_double(),
+##   x.7 = col_double(),
+##   x.8 = col_double(),
+##   x.9 = col_double(),
+##   x.10 = col_double()
+## )</code></pre>
+<pre class="r"><code>vowel.test$y &lt;- as.factor(vowel.test$y)
+vowel.test &lt;- vowel.test[2:11]</code></pre>
+<pre class="r"><code>#from the test data model we could know that when the mtry=3 and nodesize=1, error is minimal
+fit.vowel.t &lt;- randomForest(y ~ ., data=vowel.train,mtry=3,nodesize=1)
+pre_test &lt;- predict(fit.vowel.t, vowel.test)
+err.test &lt;- 1 - mean(pre_test ==fit.vowel.t$y )</code></pre>
+<pre><code>## Warning in `==.default`(pre_test, fit.vowel.t$y): 长的对象长度不是短的对象长度的
+## 整倍数</code></pre>
+<pre><code>## Warning in is.na(e1) | is.na(e2): 长的对象长度不是短的对象长度的整倍数</code></pre>
+<pre class="r"><code>err.test</code></pre>
+<pre><code>## [1] 0.3882576</code></pre>
 </div>
 
 

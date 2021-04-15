@@ -4,10 +4,12 @@ output: html_document
 ---
 ```{r}
 library('randomForest')  ## fit random forest
-library('dplyr')    ## data manipulation
-library('magrittr') ## for '%<>%' operator
-library('gpairs')   ## pairs plot
-library('viridis')  ## viridis color palette
+library(dplyr)    ## data manipulation
+library(magrittr) ## for '%<>%' operator
+library(gpairs)   ## pairs plot
+library(viridis)  ## viridis color palette
+library(caret)
+library(tidyverse)
 ```
 
 # Problem1&2:load the data
@@ -15,7 +17,7 @@ library('viridis')  ## viridis color palette
 ```{r}
 vowel.train <- read.csv("~/Projects/homework-DS5640-Wenqi/hw6/vowel.train.txt")
 vowel.train$y <- as.factor(vowel.train$y)
-vowel.train <- vowel.train %>% select(-row.names)
+vowel.train <- vowel.train[2:11]
 ```
 
 # Problem3
@@ -23,4 +25,69 @@ vowel.train <- vowel.train %>% select(-row.names)
 ```{r}
 fit.vowel <- randomForest(y ~ ., data=vowel.train)
 ```
+
+# Problem4
+
+```{r}
+set.seed(123) 
+vowel.5flod <- createFolds(vowel.train$y, k=5)
+```
+
+```{r}
+vowel.fun <- function(mtree,node, flds = vowel.5flod) {
+    cverr <- rep(NA, length(flds))
+    for(tst_idx in 1:length(flds)) { ## for each fold
+    
+    ## get training and testing data
+    vowel_trn <- vowel.train[-flds[[tst_idx]],]
+    vowel_tst <- vowel.train[ flds[[tst_idx]],]
+    
+    vowel_trn$y <- as.factor(vowel_trn$y)
+    vowel_tst$y <- as.factor(vowel_tst$y)
+    
+    ## fit rf model to training data
+    fit_rf <- randomForest(y ~ ., nodesize = node, mtry=mtree,data=vowel_trn)
+    
+    ## compute test error on testing data
+    pre_tst <- predict(fit_rf, vowel_tst)
+    error <- mean(pre_tst == vowel_tst$y)
+    
+    cverr[tst_idx] <- error
+  }
+  return(mean(cverr))
+}
+```
+
+
+```{r}
+err_table <- expand.grid(mtree = c(3,4,5),node= c(1,5,10,20,40,80),error = NA)
+
+for (i in 1:nrow(err_table)) {
+    err <- vowel.fun(mtree=err_table[i,1],node=err_table[i,2],  flds = vowel.5flod)
+    err_table[i,3]<- 1-err
+}
+err_table
+```
+
+
+# Problem5
+
+```{r}
+vowel.test <- read_csv("~/Projects/homework-DS5640-Wenqi/hw6/vowel.test.txt")
+vowel.test$y <- as.factor(vowel.test$y)
+vowel.test <- vowel.test[2:11]
+```
+
+
+```{r}
+#from the test data model we could know that when the mtry=3 and nodesize=1, error is minimal
+fit.vowel.t <- randomForest(y ~ ., data=vowel.train,mtry=3,nodesize=1)
+pre_test <- predict(fit.vowel.t, vowel.test)
+err.test <- 1 - mean(pre_test ==fit.vowel.t$y )
+err.test
+```
+
+
+
+
 
