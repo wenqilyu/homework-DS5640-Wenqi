@@ -210,7 +210,7 @@ abline(h=cverrs_mean[best_idx] + cverrs_sd[best_idx], lty=3)
 
 ## Explaination
 
-* we could choose the black point since it is the best one.
+* we could choose the k=25 since it is the best one.
 
 
 
