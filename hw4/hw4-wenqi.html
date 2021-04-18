@@ -504,6 +504,62 @@ table(pred.knn,dir)</code></pre>
 <ul>
 <li>overall, the better model is lda whose accuracy is 0.625</li>
 </ul>
+<pre class="r"><code># glm lg1+lg2
+fit_glm12 &lt;- glm(Direction ~ Lag1+abs(Lag2), data = Weekly, family = binomial, subset = train_data)
+summary(fit_glm12)</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = Direction ~ Lag1 + abs(Lag2), family = binomial, 
+##     data = Weekly, subset = train_data)
+## 
+## Deviance Residuals: 
+##    Min      1Q  Median      3Q     Max  
+## -1.553  -1.248   1.021   1.096   1.270  
+## 
+## Coefficients:
+##             Estimate Std. Error z value Pr(&gt;|z|)  
+## (Intercept)  0.14982    0.09302   1.611   0.1073  
+## Lag1        -0.05958    0.02912  -2.046   0.0407 *
+## abs(Lag2)    0.04223    0.04159   1.015   0.3099  
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for binomial family taken to be 1)
+## 
+##     Null deviance: 1354.7  on 984  degrees of freedom
+## Residual deviance: 1349.4  on 982  degrees of freedom
+## AIC: 1355.4
+## 
+## Number of Fisher Scoring iterations: 4</code></pre>
+<pre class="r"><code>pred_glm12 &lt;- predict(fit_glm12, wek, type = &quot;response&quot;)
+pred_glm12 &lt;- ifelse(pred_glm12&gt;0.5,&quot;up&quot;,&quot;down&quot;)
+table(pred_glm12 , dir)</code></pre>
+<pre><code>##           dir
+## pred_glm12 Down Up
+##       down    5  7
+##       up     38 54</code></pre>
+<pre class="r"><code>#lda lg1 lg2
+
+fit_lda12 &lt;- lda(Direction ~ Lag1+abs(Lag2), data = Weekly, subset = train_data)
+prid_lda12 &lt;-  predict(fit_lda, wek)
+table(prid_lda12$class,dir)</code></pre>
+<pre><code>##       dir
+##        Down Up
+##   Down    9  5
+##   Up     34 56</code></pre>
+<pre class="r"><code>mean(prid_lda12$class==dir)</code></pre>
+<pre><code>## [1] 0.625</code></pre>
+<pre class="r"><code>pred.knn3 &lt;- knn(train_knn, test_knn, train.Direction, k = 3)
+table(pred.knn3,dir)</code></pre>
+<pre><code>##          dir
+## pred.knn3 Down Up
+##      Down   15 19
+##      Up     28 42</code></pre>
+<pre class="r"><code>mean(pred.knn3==dir)</code></pre>
+<pre><code>## [1] 0.5480769</code></pre>
+<ul>
+<li>we could choose lda, since it has the best performance since it accuracy is 0.65.</li>
+</ul>
 </div>
 </div>
 

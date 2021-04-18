@@ -98,4 +98,39 @@ mean(pred.knn==dir)
 
 * overall, the better model is lda whose accuracy is 0.625
 
+```{r}
+# glm lg1+lg2
+fit_glm12 <- glm(Direction ~ Lag1+abs(Lag2), data = Weekly, family = binomial, subset = train_data)
+summary(fit_glm12)
+pred_glm12 <- predict(fit_glm12, wek, type = "response")
+pred_glm12 <- ifelse(pred_glm12>0.5,"up","down")
+table(pred_glm12 , dir)
+```
+
+
+
+```{r}
+#lda lg1 lg2
+
+fit_lda12 <- lda(Direction ~ Lag1+abs(Lag2), data = Weekly, subset = train_data)
+prid_lda12 <-  predict(fit_lda, wek)
+table(prid_lda12$class,dir)
+
+```
+
+```{r}
+mean(prid_lda12$class==dir)
+```
+
+
+```{r}
+pred.knn3 <- knn(train_knn, test_knn, train.Direction, k = 3)
+table(pred.knn3,dir)
+```
+
+```{r}
+mean(pred.knn3==dir)
+```
+
+* we could choose lda, since it has the best performance since it accuracy is 0.65.
 
