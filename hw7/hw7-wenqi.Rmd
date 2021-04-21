@@ -22,27 +22,22 @@ dat <- mixture.example
 
 ```
 
-```{r}
-img_dat <- matrix(nrow=200,ncol=2)
-img_dat[,1]<- dat$x[,1]
-img_dat[,2]<- dat$x[,2]
-```
 
 
 ```{r}
 model <- keras_model_sequential()
 
 model <- model %>%
-  layer_flatten(input_shape = c(2, 200)) %>%
-  layer_dense(units = 128, activation = 'relu') %>%
-  layer_dense(units = 10, activation = 'softmax')
+  layer_flatten(input_shape = c(2)) %>%
+  layer_dense(units = 10, activation = 'relu') %>%
+  layer_dense(units = 2, activation = 'softmax')
 
 model <- model %>% compile(
   optimizer = 'adam', 
   loss = 'sparse_categorical_crossentropy',
   metrics = c('accuracy')
 )
-
+model %>% fit(dat$x, dat$y, epochs = 5, verbose = TRUE)
 ```
 
 
