@@ -44,9 +44,9 @@ pred1 <- matrix(predict, length(dat$px1), length(dat$px2))
 
 ```{r}
 ## 10 hidden nodes with weight decay
-fit.knn <- nnet(x=dat$x, y=dat$y, size=10, entropy=TRUE, decay=0.02)
-pred.knn<- predict(fit.knn , dat$xnew, type="class")
-pred1.knn <- matrix(pred.knn, length(dat$px1), length(dat$px2))
+fit.nn <- nnet(x=dat$x, y=dat$y, size=10, entropy=TRUE, decay=0.02)
+pred.nn<- predict(fit.nn , dat$xnew, type="class")
+pred1.nn <- matrix(pred.nn, length(dat$px1), length(dat$px2))
 ```
 
 
@@ -55,8 +55,8 @@ plot(dat$x[,1], dat$x[,2],col=ifelse(dat$y==0, 'blue', 'orange'))
 prob <- matrix(dat$prob, length(dat$px1), length(dat$px2))
 boundary <- contourLines(dat$px1, dat$px2, prob, levels=0.5)
 boundary_line <- sapply(boundary, lines, col='purple')
-knn.boundary <- contourLines(dat$px1, dat$px2, pred1.knn, levels=0.5)
-sapply(knn.boundary, lines,col='green')
+nn.boundary <- contourLines(dat$px1, dat$px2, pred1.nn, levels=0.5)
+sapply(nn.boundary, lines,col='green')
 ker.boundary <- contourLines(dat$px1, dat$px2, pred1, levels=0.5)
 sapply(ker.boundary, lines)
 ```
