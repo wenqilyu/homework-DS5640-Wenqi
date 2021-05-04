@@ -210,7 +210,7 @@ abline(h=cverrs_mean[best_idx] + cverrs_sd[best_idx], lty=3)
 
 ## Explaination
 
-* we could choose the k=7 since it is the best one(has lowest test error).
+* we could choose the k=23 since it is the best one under 1sd rule.
 
 
 
