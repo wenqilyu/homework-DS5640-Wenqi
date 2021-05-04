@@ -131,24 +131,24 @@ effective_df <- function(y, x, kern, ...) {
 
 
 ```{r}
-manipulate({
+#manipulate({
    ## make predictions using NW method at training inputs
-   y_hat <- nadaraya_watson(y, x, x,
-     kern=kernel_k_nearest_neighbors, k=k_slider)
-  edf <- effective_df(y, x, 
-     kern=kernel_k_nearest_neighbors, k=k_slider)
-   aic_ <- aic(y, y_hat, edf)
-   bic_ <- bic(y, y_hat, edf)
-   y_hat_plot <- nadaraya_watson(y, x, x_plot,
-     kern=kernel_k_nearest_neighbors, k=k_slider)
-   plot(x, y, xlab="Time (ms)", ylab="Acceleration (g)")
-   legend('topright', legend = c(
-     paste0('eff. df = ', round(edf,1)),
-     paste0('aic = ', round(aic_, 1)),
-     paste0('bic = ', round(bic_, 1))),
-     bty='n')
-   lines(x_plot, y_hat_plot, col="#882255", lwd=2) 
- }, k_slider=slider(1, 10, initial=3, step=1))
+ #  y_hat <- nadaraya_watson(y, x, x,
+#     kern=kernel_k_nearest_neighbors, k=k_slider)
+#  edf <- effective_df(y, x, 
+#     kern=kernel_k_nearest_neighbors, k=k_slider)
+#   aic_ <- aic(y, y_hat, edf)
+ #  bic_ <- bic(y, y_hat, edf)
+ #  y_hat_plot <- nadaraya_watson(y, x, x_plot,
+ #    kern=kernel_k_nearest_neighbors, k=k_slider)
+ #  plot(x, y, xlab="Time (ms)", ylab="Acceleration (g)")
+ #  legend('topright', legend = c(
+  #   paste0('eff. df = ', round(edf,1)),
+  #   paste0('aic = ', round(aic_, 1)),
+  #   paste0('bic = ', round(bic_, 1))),
+  #   bty='n')
+ #  lines(x_plot, y_hat_plot, col="#882255", lwd=2) 
+ #}, k_slider=slider(1, 10, initial=3, step=1))
 
 ```
 
@@ -179,7 +179,7 @@ cvknnreg_mcycle <- function(kNN = 10, flds=mcycle_flds) {
     
     ## compute test error on testing data
     pre_tst <- predict(knn_fit, mcycle_tst)
-    cverr[tst_idx] <- mean((mcycle$accel - pre_tst)^2)
+    cverr[tst_idx] <- mean((mcycle_tst$accel - pre_tst)^2)
   }
   return(cverr)
 }
@@ -210,7 +210,7 @@ abline(h=cverrs_mean[best_idx] + cverrs_sd[best_idx], lty=3)
 
 ## Explaination
 
-* we could choose the k=25 since it is the best one.
+* we could choose the k=7 since it is the best one(has lowest test error).
 
 
 
